@@ -82,7 +82,7 @@ def read_bin(filename):
     """
     try:
         with open(filename, 'rb') as file:
-            return [line.decode().strip().split(',') for line in file.readlines()]
+            return [line.decode().strip().split(',') for line in file.readlines()]            
     except Exception as e:
         print(f'이진 파일 읽기 오류: {e}')
         return []
