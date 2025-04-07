@@ -15,7 +15,7 @@ class DummySensor:
             'mars_base_internal_oxygen': 0.0            # 내부 산소 농도 (4~7%)
         }
 
-    # 환경값을 무작위로 설정하는 메서드
+    # 환경값을 무작위로 설정
     def set_env(self):
         self.env_values['mars_base_internal_temperature'] = random.uniform(18, 30)
         self.env_values['mars_base_external_temperature'] = random.uniform(0, 21)
@@ -24,7 +24,7 @@ class DummySensor:
         self.env_values['mars_base_internal_co2'] = random.uniform(0.02, 0.1)
         self.env_values['mars_base_internal_oxygen'] = random.uniform(4, 7)
 
-    # 환경값 반환 및 로그 파일 작성 메서드
+    # 환경값 반환 및 로그 파일 작성
     def get_env(self):
         # 로그 문자열 생성 (날짜 및 각 항목 소수점 포맷 적용)
         log_line = '{time}, {internal_temp:.2f}, {external_temp:.2f}, {humidity:.2f}, {illuminance:.2f}, {co2:.4f}, {oxygen:.2f}\n'.format(
@@ -37,7 +37,7 @@ class DummySensor:
             oxygen=self.env_values['mars_base_internal_oxygen']
         )
 
-        # 로그 파일에 내용 추가 (덮어쓰기 아님)
+        # 로그 파일에 내용 추가
         with open('sensor_log.txt', 'a') as file:
             file.write(log_line)
 
