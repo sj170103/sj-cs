@@ -64,6 +64,19 @@ class ChatServer:
 
             # 입장 알림
             self.broadcast(f'{nickname}님이 입장하셨습니다.', sender=None)
+            
+            # 새로 접속한 클라이언트 환영 메시지 및 사용법 안내 전송
+            welcome_msg = (
+                f"================================================\n"
+                f"채팅 서버에 오신 것을 환영합니다, {nickname}님!\n"
+                f" - 귓속말: /w [상대방닉네임] [메시지]\n"
+                f" - 나가기: /종료\n"
+                f"================================================\n"
+            )
+            try:
+                client_sock.sendall(welcome_msg.encode('utf-8'))
+            except Exception as e:
+                print(f"환영 메시지 전송 실패({client_addr}): {e}")
 
             while True:
                 msg = self._recv_line(client_sock)
