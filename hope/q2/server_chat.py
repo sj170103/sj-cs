@@ -11,7 +11,7 @@ ADMIN_SHUTDOWN_CMD: str = '/shutdown'
 
 
 class ChatServer:
-    def __init__(self, host: str = HOST, port: int = PORT) -> None:
+    def __init__(self, host=HOST, port=PORT) -> None:
         self.host = host
         self.port = port
         self.server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
