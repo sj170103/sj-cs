@@ -38,7 +38,7 @@ def build_message(sender_email, to_addr, subject, name):
     msg.attach(MIMEText(html_body, 'html', _charset='utf-8'))
     return msg
 
-
+ # 참고용(시도 결과: 그룹으로 한번에 발송하는것보단 대량발송시 느릴수 있으나, 개인정보보호와 전달성(스팸)이높아 개별발송으로 선택)
 def send_individual(server, sender_email, recipients):
     ok, fail = 0, 0
     subject = 'hello'
@@ -55,7 +55,7 @@ def send_individual(server, sender_email, recipients):
     print(f'완료(개별): 성공 {ok} / 실패 {fail} / 총 {len(recipients)}')
 
 
- # 참고용(시도 결과, 개인정보/전달율 이슈로 개별 발송 선택)
+ # 참고용(시도 결과: 한번에 보내서 전송이 빠를수 있으나 개인정보/전달율 이슈로 개별 발송 선택)
 # def send_group_bcc(server, sender_email, recipients):
 #     emails = [r['email'] for r in recipients]
 #     subject = 'hello'
