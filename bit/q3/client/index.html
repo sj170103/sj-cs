@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Todo 공유 클라이언트</title>
+    <style>
+        :root {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f2f4f8;
+            color: #1f2933;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+        }
+
+        .panel {
+            max-width: 960px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 28px;
+        }
+
+        form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+        input[type='text'],
+        input[type='number'] {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            background: #2563eb;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            background: #475569;
+        }
+
+        button.danger {
+            background: #dc2626;
+        }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .status {
+            min-height: 24px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .status[data-type='error'] {
+            color: #dc2626;
+        }
+
+        .status[data-type='success'] {
+            color: #15803d;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .lookup {
+            margin-top: 18px;
+            padding: 16px;
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+<main class="panel">
+    <h1>Todo 공유 클라이언트</h1>
+    <div id="status" class="status" data-type="info">서버와 동기화되지 않았습니다.</div>
+
+    <section class="controls">
+        <form id="add-form">
+            <label for="title-input">할 일</label>
+            <input id="title-input" type="text" placeholder="할일을 적어주세요" required>
+
+            <label>
+                <input id="done-input" type="checkbox">
+                완료로 추가
+            </label>
+
+            <button type="submit">추가</button>
+            <button type="button" id="refresh-btn" class="secondary">목록 새로고침</button>
+        </form>
+    </section>
+
+    <section class="lookup">
+        <form id="lookup-form">
+            <label for="lookup-id">ID 조회</label>
+            <input id="lookup-id" type="number" min="1" placeholder="아이디 입력" required>
+            <button type="submit">조회</button>
+        </form>
+        <pre id="lookup-result">{}</pre>
+    </section>
+
+    <section class="list">
+        <table id="todo-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>제목</th>
+                <th>상태</th>
+                <th>생성</th>
+                <th>작업</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td colspan="5">데이터가 없습니다. 목록을 새로고침하세요.</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<script>
+const API_BASE = '/todos';
+const todoState = new Map();
+const statusEl = document.getElementById('status');
+const tableBody = document.querySelector('#todo-table tbody');
+const lookupResult = document.getElementById('lookup-result');
+
+function setStatus(message, type = 'info') {
+    statusEl.textContent = message;
+    statusEl.dataset.type = type;
+}
+
+async function fetchJSON(path, options = {}) {
+    const config = {
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+    };
+    const response = await fetch(path, config);
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status}: ${text || '요청 실패'}`);
+    }
+    if (response.status === 204) {
+        return {};
+    }
+    return response.json();
+}
+
+function renderTodos(items) {
+    todoState.clear();
+    const rows = items.map((item) => {
+        todoState.set(item.id, item);
+        return `
+            <tr data-id="${item.id}">
+                <td>${item.id}</td>
+                <td>${item.title}</td>
+                <td>${item.done ? '완료' : '미완료'}</td>
+                <td>${item.created_at}</td>
+                <td>
+                    <button data-action="toggle" data-id="${item.id}">
+                        ${item.done ? '미완료로' : '완료로'}
+                    </button>
+                    <button data-action="edit" data-id="${item.id}" class="secondary">제목수정</button>
+                    <button data-action="delete" data-id="${item.id}" class="danger">삭제</button>
+                </td>
+            </tr>
+        `;
+    });
+    tableBody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="5">등록된 Todo가 없습니다.</td></tr>';
+}
+
+async function loadTodos() {
+    try {
+        const data = await fetchJSON(`${API_BASE}/list`);
+        renderTodos(data.items || []);
+        setStatus(`총 ${data.count}개의 Todo를 불러왔습니다.`, 'success');
+    } catch (error) {
+        setStatus(error.message, 'error');
+    }
+}
+
+document.getElementById('add-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const titleInput = document.getElementById('title-input');
+    const doneInput = document.getElementById('done-input');
+
+    const payload = {
+        title: titleInput.value.trim(),
+        done: doneInput.checked,
+    };
+
+    if (!payload.title) {
+        setStatus('제목을 입력하세요.', 'error');
+        return;
+    }
+
+    try {
+        await fetchJSON(`${API_BASE}/add`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        titleInput.value = '';
+        doneInput.checked = false;
+        setStatus('새 Todo를 추가했습니다.', 'success');
+        await loadTodos();
+    } catch (error) {
+        setStatus(error.message, 'error');
+    }
+});
+
+document.getElementById('refresh-btn').addEventListener('click', loadTodos);
+
+document.getElementById('lookup-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const lookupId = Number(document.getElementById('lookup-id').value);
+    if (!lookupId) {
+        return;
+    }
+    try {
+        const data = await fetchJSON(`${API_BASE}/${lookupId}`);
+        lookupResult.textContent = JSON.stringify(data, null, 2);
+        setStatus(`ID ${lookupId} 조회 완료`, 'success');
+    } catch (error) {
+        lookupResult.textContent = '{}';
+        setStatus(error.message, 'error');
+    }
+});
+
+tableBody.addEventListener('click', async (event) => {
+    const button = event.target.closest('button[data-action]');
+    if (!button) {
+        return;
+    }
+    const todoId = Number(button.dataset.id);
+    const todo = todoState.get(todoId);
+    if (!todo) {
+        setStatus('목록이 최신 상태가 아닙니다. 새로고침 해주세요.', 'error');
+        return;
+    }
+
+    const action = button.dataset.action;
+    try {
+        if (action === 'toggle') {
+            await fetchJSON(`${API_BASE}/${todoId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ title: todo.title, done: !todo.done }),
+            });
+            setStatus(`ID ${todoId} 상태를 업데이트했습니다.`, 'success');
+        } else if (action === 'edit') {
+            const nextTitle = prompt('새 제목을 입력하세요.', todo.title);
+            if (nextTitle === null) {
+                return;
+            }
+            const trimmed = nextTitle.trim();
+            if (!trimmed) {
+                setStatus('제목은 비워둘 수 없습니다.', 'error');
+                return;
+            }
+            await fetchJSON(`${API_BASE}/${todoId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ title: trimmed, done: todo.done }),
+            });
+            setStatus(`ID ${todoId} 제목을 수정했습니다.`, 'success');
+        } else if (action === 'delete') {
+            if (!confirm(`ID ${todoId} Todo를 삭제할까요?`)) {
+                return;
+            }
+            await fetchJSON(`${API_BASE}/${todoId}`, {
+                method: 'DELETE',
+            });
+            setStatus(`ID ${todoId} Todo를 삭제했습니다.`, 'success');
+        }
+        await loadTodos();
+    } catch (error) {
+        setStatus(error.message, 'error');
+    }
+});
+
+window.addEventListener('DOMContentLoaded', loadTodos);
+</script>
+</body>
+</html>
