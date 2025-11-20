@@ -43,7 +43,3 @@ bit/q3/
 └── README.md        # 현재 문서
 ```
 
-## 5. 참고 사항
-- CSV는 프로젝트 루트(`todo_data.csv`)에 저장되므로 WSL/Windows 간 경로 차이를 주의합니다.
-- `frontend/index.html`은 Fetch API를 사용하므로 FastAPI 서버와 동일한 도메인/포트에서 제공해야 CORS 없이 동작합니다.
-- 서버/클라이언트 실행 중 문제가 생기면 `todo_data.csv`를 삭제하고 앱을 재시작해 초기 상태로 되돌릴 수 있습니다.
