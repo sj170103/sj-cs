@@ -1,4 +1,3 @@
-# sendmail.py — 과제2(HTML + CSV). 개별 발송 선택, 그룹 Bcc 호출 주석 처리.
 import csv
 import smtplib
 import html
