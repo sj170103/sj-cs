@@ -1,12 +1,12 @@
-# 📝 게시판 API 고도화 (Dependency Injection & Pydantic)
+# 📝 문제7 또 다시 알 수 없는 오류
 
-## 📌 과제 개요 (Project Overview)
+## 📌 과제 개요 
 이 프로젝트는 기존 FastAPI 게시판 API에 **의존성 주입(Dependency Injection)** 패턴과 **Pydantic 스키마**를 적용하여 안정성과 데이터 검증 기능을 강화한 버전입니다.
 `contextlib`를 활용한 DB 세션 관리 자동화와 Pydantic을 이용한 입출력 데이터 검증을 구현했습니다.
 
 ---
 
-## 📂 디렉터리 구조 (Directory Structure)
+## 📂 디렉터리 구조 
 
 ```text
 bit/q7/
@@ -21,7 +21,7 @@ bit/q7/
 
 ---
 
-## 🛠 기술 스택 (Tech Stack)
+## 🛠 기술 스택
 
 | 구성 요소 | 사용 기술 |
 |-----------|-----------|
@@ -32,9 +32,9 @@ bit/q7/
 
 ---
 
-## 🚀 주요 구현 내용 (Implementation Details)
+## 🚀 주요 구현 내용 
 
-### 1. 의존성 주입 (Dependency Injection)
+### 1. 의존성 주입 
 - **파일**: `database.py`
 - **내용**: `contextlib.contextmanager`를 사용하여 `get_db` 제너레이터 함수를 구현.
 - **효과**: API 요청 시 DB 세션을 자동으로 생성하고, 요청 처리가 끝나면 자동으로 닫아 리소스 누수를 방지함.
@@ -52,7 +52,7 @@ bit/q7/
 
 ---
 
-## ✅ 실행 및 테스트 (Execution & Testing)
+## ✅ 실행 및 테스트 
 
 ### 1. 서버 실행
 Swagger UI를 통해 직접 API를 테스트할 수 있습니다.
